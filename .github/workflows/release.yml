@@ -7,13 +7,8 @@ on:
     branches: [ master ]
 
 jobs:
-  release:
-    runs-on: ${{ matrix.os }}
-
-    # Platforms to build on/for
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+  build:
+    runs-on: windows-latest
 
     steps:
       - name: Check out Git repository
@@ -24,14 +19,15 @@ jobs:
         with:
           node-version: 18
 
-      - name: Build/release Electron app
-        uses: motrixapp/action-electron-builder@v2
-        with:
-          build_script_name: 'build:github'
-          # GitHub token, automatically provided to the action
-          # (No need to define this secret in the repo settings)
-          github_token: ${{ secrets.TOKEN }}
+      - name: Build Electron app
+        run: |
+          yarn install
+          yarn build
 
-          # If the commit is tagged with a version (e.g. "v1.0.0"),
-          # release the app after building
-          release: ${{ vars.skip_publish != 'true' }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: release-files
+          path: |
+            release/*.zip
+            release/*.exe
