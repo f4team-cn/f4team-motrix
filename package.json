@@ -110,16 +110,5 @@
     "webpack-hot-middleware": "^2.25.3",
     "webpack-merge": "^5.8.0",
     "worker-loader": "^3.0.8"
-  },
-  "build": {
-    "appId": "agalwood.motrix-f4team",
-    "protocols": {
-      "name": "electron-deep-linking",
-      "schemes": [
-        "motrix"
-      ]
-    }
-  },
-  "win": {},
-  "mac": {}
+  }
 }
