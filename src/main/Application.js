@@ -9,7 +9,7 @@ import {
   APP_RUN_MODE,
   AUTO_SYNC_TRACKER_INTERVAL,
   AUTO_CHECK_UPDATE_INTERVAL,
-  PROXY_SCOPES
+  PROXY_SCOPES, CLIENT_PROTOCOL_NAME
 } from '@shared/constants'
 import { checkIsNeedRun } from '@shared/utils'
 import {
@@ -35,6 +35,7 @@ import TouchBarManager from './ui/TouchBarManager'
 import TrayManager from './ui/TrayManager'
 import DockManager from './ui/DockManager'
 import ThemeManager from './ui/ThemeManager'
+import * as path from 'node:path'
 
 export default class Application extends EventEmitter {
   constructor () {
@@ -85,6 +86,10 @@ export default class Application extends EventEmitter {
     this.handleIpcMessages()
 
     this.handleIpcInvokes()
+
+    this.registerDeepLinks()
+
+    this.handleUrlEvent()
 
     this.emit('application:initialized')
   }
@@ -296,7 +301,12 @@ export default class Application extends EventEmitter {
       logger.info(`[Motrix] detected ${key} value change event:`, newValue, oldValue)
       this.updateManager.setupProxy(newValue)
 
-      const { enable, server, bypass, scope = [] } = newValue
+      const {
+        enable,
+        server,
+        bypass,
+        scope = []
+      } = newValue
       const system = enable && server && scope.includes(PROXY_SCOPES.DOWNLOAD)
         ? {
           'all-proxy': server,
@@ -527,7 +537,10 @@ export default class Application extends EventEmitter {
     }
 
     const state = this.configManager.getUserConfig('window-state', {})
-    const { page, bounds } = data
+    const {
+      page,
+      bounds
+    } = data
     const newState = {
       ...state,
       [page]: bounds
@@ -758,7 +771,10 @@ export default class Application extends EventEmitter {
 
   savePreference (config = {}) {
     logger.info('[Motrix] save preference:', config)
-    const { system, user } = config
+    const {
+      system,
+      user
+    } = config
     if (!isEmpty(system)) {
       console.info('[Motrix] main save system config: ', system)
       this.configManager.setSystemConfig(system)
@@ -851,7 +867,10 @@ export default class Application extends EventEmitter {
             extensions: ['torrent']
           }
         ]
-      }).then(({ canceled, filePaths }) => {
+      }).then(({
+        canceled,
+        filePaths
+      }) => {
         if (canceled || filePaths.length === 0) {
           return
         }
@@ -878,7 +897,10 @@ export default class Application extends EventEmitter {
     })
 
     this.on('application:reveal-in-folder', (data) => {
-      const { gid, path } = data
+      const {
+        gid,
+        path
+      } = data
       logger.info('[Motrix] application:reveal-in-folder===>', path)
       if (path) {
         showItemInFolder(path)
@@ -1020,6 +1042,57 @@ export default class Application extends EventEmitter {
         ...context
       }
       return result
+    })
+  }
+
+  registerDeepLinks () {
+    if (!app.isDefaultProtocolClient(CLIENT_PROTOCOL_NAME)) {
+      if (process.defaultApp) {
+        if (process.argv.length >= 2) {
+          app.setAsDefaultProtocolClient(CLIENT_PROTOCOL_NAME, process.execPath, [path.resolve(process.argv[2])])
+        }
+      } else {
+        app.setAsDefaultProtocolClient(CLIENT_PROTOCOL_NAME)
+      }
+    }
+  }
+
+  handleUrlEvent () {
+    const lock = app.requestSingleInstanceLock()
+    const onOpenUrl = (url) => {
+      if (/[^/]+\/$/.test(url)) {
+        url = url.slice(0, -1)
+      }
+      const uri = new URL(url)
+      if (uri.protocol.slice(0, -1) !== CLIENT_PROTOCOL_NAME) {
+        return
+      }
+      if (uri.host === 'command') {
+        const command = uri.pathname.substring(1)
+        const window = this.windowManager.getWindow('index')
+        const params = {}
+        for (const [key, value] of uri.searchParams.entries()) {
+          params[key] = value
+        }
+        if (!params._silent) {
+          if (window.isMinimizable()) window.restore()
+          window.focus()
+        }
+        window.webContents.send('command', command, params)
+      }
+      console.log('open deep link url: ' + url)
+    }
+    if (lock) {
+      app.on('second-instance', (event, argv) => {
+        onOpenUrl(argv.pop())
+      })
+    } else {
+      app.quit()
+      return
+    }
+    app.on('open-url', (event, url) => {
+      event.preventDefault()
+      onOpenUrl(url)
     })
   }
 }
