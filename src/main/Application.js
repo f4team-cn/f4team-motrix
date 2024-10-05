@@ -1078,7 +1078,7 @@ export default class Application extends EventEmitter {
           if (window.isMinimizable()) window.restore()
           window.focus()
         }
-        window.webContents.send('command', command, params)
+        setTimeout(() => window.webContents.send('command', command, params), 700)
       }
       console.log('open deep link url: ' + url)
     }

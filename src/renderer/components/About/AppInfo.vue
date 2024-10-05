@@ -2,7 +2,7 @@
   <div class="app-info">
     <div class="app-version">
       <mo-logo :width="93" :height="21" style="vertical-align: bottom;" />
-      <span>Version {{version}}</span>
+      <span>Version {{version}} - <a href="https://github.com/f4team-cn/f4pan" target="_blank"><strong>F4Pan</strong></a></span>
     </div>
     <div class="app-icon"></div>
     <div class="engine-info" v-if="!!engine">
@@ -59,6 +59,11 @@
     margin-left: 20px;
     color: $--app-version-color;
     line-height: 18px;
+
+    a {
+      color: $--app-version-color;
+      text-decoration: none;
+    }
   }
   .app-icon {
     position: absolute;
