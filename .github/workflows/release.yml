@@ -30,12 +30,6 @@ jobs:
           name: Motrix-Setup
           path: release/Motrix-Setup-*.*.*.exe
 
-      - name: Upload [Motrix] artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: Motrix
-          path: release/Motrix-*.*.*.exe
-
       - name: Upload [Motrix x864] artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -52,10 +46,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Motrix-ia32-zip
-          path: release/Motrix-*.*.*-ia32-win.zip
+          path: release/win-ia32-unpacked
 
       - name: Upload [Motrix x64 Zip] artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Motrix-x64-zip
-          path: release/Motrix-*.*.*-win.zip
+          path: release/win-unpacked
