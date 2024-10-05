@@ -1059,6 +1059,13 @@ export default class Application extends EventEmitter {
 
   handleUrlEvent () {
     const lock = app.requestSingleInstanceLock()
+    const parseValue = (value) => {
+      try {
+        return JSON.parse(value)
+      } catch {
+        return value
+      }
+    }
     const onOpenUrl = (url) => {
       if (/[^/]+\/$/.test(url)) {
         url = url.slice(0, -1)
@@ -1072,13 +1079,13 @@ export default class Application extends EventEmitter {
         const window = this.windowManager.getWindow('index')
         const params = {}
         for (const [key, value] of uri.searchParams.entries()) {
-          params[key] = value
+          params[key] = parseValue(value)
         }
-        if (!params._silent) {
-          if (window.isMinimizable()) window.restore()
-          window.focus()
-        }
-        setTimeout(() => window.webContents.send('command', command, params), 700)
+        console.log('open deep link url params: ', params)
+        if (window.isMinimizable()) window.restore()
+        setTimeout(() => {
+          window.webContents.send('command', command, params)
+        }, 700)
       }
       console.log('open deep link url: ' + url)
     }
